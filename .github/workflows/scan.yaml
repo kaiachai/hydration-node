@@ -1,0 +1,55 @@
+name: Hydration-Node Advanced Security Scan
+
+on:
+  push:
+    branches:
+      - main # Change to your main branch
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60 # Adjust as needed - crucial for resource limits!
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          path: hydration-node # Adjust if the pallets are not in the root directory
+
+      - name: Set up Rust (Nightly)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+
+      - name: Install necessary tools (example - adapt to your tools)
+        run: |
+          Install cargo-fuzz (if using)
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+      - name: Run Static Analysis (example - adapt to your tools)
+        run: |
+          cargo clippy --message-format=json # Example using Clippy
+          cargo audit # Example using Cargo Audit
+          # Add commands for other static analysis tools here
+
+      - name: Run Dynamic Analysis (Testing - example)
+        run: |
+          cd hydration-node/pallets # Navigate to the pallets directory
+          cargo test --all # Run all tests
+
+      - name: Run Fuzzing (example - requires fuzz targets!)
+        run: |
+          cd hydration-node/pallets # Navigate to the pallets directory
+          cargo fuzz run my_fuzz_target_1 --jobs 2 --timeout 30 # Example - replace with your fuzz targets and adjust parameters
+          cargo fuzz run my_fuzz_target_2 --jobs 2 --timeout 30 # Add more fuzz targets as needed
+
+      - name: Collect and Report Results
+        run: |
+         echo "Analysis complete. Check the logs for details."
+
+      - name: Fail on Errors
+        if: steps.security-scan.outcome == 'failure'
+        run: exit 1
